@@ -1,0 +1,6 @@
+Type^Label^Role^Update_date
+1^Summarized Description^Search only^20240611
+2^SIMPLEX Description^Search and Display^20240611
+3^Example from ARC^Search only^20240611
+4^Chemical Name^Search only^20240611
+5^CAS RN^Search only^20240611
