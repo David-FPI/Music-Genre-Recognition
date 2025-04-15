@@ -847,9 +847,7 @@ if menu == "Classify":
         classifier.add(Dense(units = 256, activation = 'relu', kernel_regularizer=regularizers.l2(0.0001)))
         classifier.add(Dropout(0.25))
         classifier.add(Dense(units = 10, activation = 'softmax'))
-    
-        classifier.compile(optimizer = 'adam', loss = 'categorical_crossentropy', metrics='accuracy')
-        
+        classifier.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
         return classifier
     
     #define function to predict music genre based on mel spectogram
