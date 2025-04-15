@@ -40,7 +40,7 @@ import hashlib
 import uuid
 import pandas as pd
 from datetime import datetime, timedelta
-
+from tensorflow.keras.layers import InputLayer
 
 # Load API key từ file .env
 load_dotenv()
@@ -822,10 +822,11 @@ if menu == "Classify":
             plt.margins(0)
             plt.savefig('melspectrogram.png')
             plt.close()  # Đảm bảo đóng ảnh sau khi lưu
-
         # Xây dựng mô hình CNN
         def GenreModel(input_shape=(100,200,4), classes=10):
             classifier = Sequential()
+            # Đảm bảo rằng lớp đầu tiên là InputLayer
+            classifier.add(InputLayer(input_shape=input_shape))
             classifier.add(Conv2D(8, (3, 3), input_shape=input_shape, activation='relu'))
             classifier.add(MaxPooling2D(pool_size=(2, 2)))
             classifier.add(Conv2D(16, (3, 3), activation='relu'))
@@ -885,7 +886,7 @@ if menu == "Classify":
 
         # Hiển thị kết quả
         st.success(f"✅ The genre of your song is: **{class_labels[class_label_final]}**")
-
+        # Hiển thị biểu đồ với nền tối
         # Hiển thị biểu đồ với nền tối
         fig, ax = plt.subplots(figsize=(10, 5))
 
@@ -910,10 +911,6 @@ if menu == "Classify":
         # Hiển thị biểu đồ trong Streamlit
         st.pyplot(fig)
 
-        # Dọn dẹp tệp tạm thời
-        os.remove("music_file.wav")
-        os.remove("audio_3sec.wav")
-        os.remove("melspectrogram.png")
 
 # Hàm tạo nhạc từ API
 async def generate_music(api_token, prompt, custom_mode, style, title, instrumental):
