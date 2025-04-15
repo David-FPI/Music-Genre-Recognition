@@ -817,34 +817,18 @@ if menu == "Classify":
             sound = AudioSegment.from_mp3(music_file)
             sound.export("music_file.wav", format="wav")
 
+        # Hàm tạo Mel Spectrogram
         def create_melspectrogram(wav_file):  
-            # Load audio file
             y, sr = librosa.load(wav_file)  
-            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)  
-            mel_spec_db = librosa.power_to_db(mel_spec)  # Convert to dB scale for better visualization
-            
-            # Create mel spectrogram plot
+            mel_spec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr))    
             plt.figure(figsize=(10, 5))
             plt.axes([0., 0., 1., 1.], frameon=False, xticks=[], yticks=[])
-            img = librosa.display.specshow(mel_spec_db, x_axis="time", y_axis='mel', sr=sr)
-            plt.colorbar(img)
+            librosa.display.specshow(mel_spec, x_axis="time", y_axis='mel', sr=sr)
             plt.margins(0)
-            
-            # Save the plot as an image
-            img_path = 'melspectrogram.png'
-            plt.savefig(img_path)
-            plt.close()  # Close plot to free up memory
-        
-            # Check if the image has been saved successfully
-            if os.path.exists(img_path):
-                try:
-                    img = Image.open(img_path)  # Open the image
-                    img.show()  # Show the image
-                except Exception as e:
-                    print(f"Error opening the image: {e}")
-            else:
-                print("Failed to create the Mel Spectrogram image.")
+            plt.savefig('melspectrogram.png')
+            plt.close()  
 
+            
         # Xây dựng mô hình CNN
         def GenreModel(input_shape=(100,200,4), classes=10):
             classifier = Sequential()
@@ -931,6 +915,8 @@ if menu == "Classify":
 
         # Hiển thị biểu đồ trong Streamlit
         st.pyplot(fig)
+
+
 
 
 
