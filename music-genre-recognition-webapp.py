@@ -21,7 +21,9 @@ from tensorflow import keras
 from keras import regularizers
 from keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import (Conv2D, MaxPooling2D, Flatten, Dropout, Dense, Activation)
+from tensorflow.keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, 
+                                     Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D,
+                                     Dropout)
 from streamlit_option_menu import option_menu
 import time
 from dotenv import load_dotenv
