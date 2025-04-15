@@ -21,9 +21,7 @@ from tensorflow import keras
 from keras import regularizers
 from keras.preprocessing.image import load_img, img_to_array
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, 
-                                     Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D,
-                                     Dropout)
+from tensorflow.keras.layers import (Conv2D, MaxPooling2D, Flatten, Dropout, Dense, Activation)
 from streamlit_option_menu import option_menu
 import time
 from dotenv import load_dotenv
@@ -42,7 +40,7 @@ import hashlib
 import uuid
 import pandas as pd
 from datetime import datetime, timedelta
-from tensorflow.keras.layers import InputLayer
+
 
 # Load API key từ file .env
 load_dotenv()
@@ -89,7 +87,7 @@ def st_toggle_switch(
 def log_error(message):
     """Ghi lỗi vào file log và hiển thị thông báo lỗi cho người dùng."""
     logging.error(message)  # Ghi lỗi vào file log
-    st.error(f"🚨 Lỗi xảy ra: {message}")  # Hiển thị lỗi cho người dùng
+    st.error(f"🚨 An error occurred: {message}")  # Hiển thị lỗi cho người dùng
 
 def generate_lyrics(prompt):
     """Gửi prompt đến OpenAI API để tạo lời bài hát"""
@@ -97,7 +95,7 @@ def generate_lyrics(prompt):
         response = client.chat.completions.create(
             model="gpt-4o",  # Hoặc "gpt-3.5-turbo" nếu tài khoản không có quyền truy cập GPT-4
             messages=[
-                {"role": "system", "content": "Bạn là một nhạc sĩ sáng tác lời bài hát chuyên nghiệp."},
+                {"role": "system", "content": "You are a professional songwriter."},
                 {"role": "user", "content": prompt}
             ],
             temperature=0.9,
@@ -108,7 +106,8 @@ def generate_lyrics(prompt):
         return response.choices[0].message.content  
 
     except Exception as e:
-        return f"⚠️ Lỗi khi tạo lời bài hát: {str(e)}"
+        return f"⚠️ Error while generating lyrics: {str(e)}"
+
 
 # CSS nâng cao cho giao diện
 st.markdown(
@@ -396,35 +395,35 @@ with st.sidebar:
         st.markdown("""
             <div class="custom-container" style="padding: 15px; margin-bottom: 20px;">
                 <h3 style="margin-top: 0; font-size: 18px; text-align: center;">
-                    🔐 Tài khoản
+                    🔐 Account
                 </h3>
         """, unsafe_allow_html=True)
         
-        auth_menu = st.radio("", ["Đăng nhập", "Đăng ký", "Quên mật khẩu"], horizontal=True, label_visibility="collapsed")
+        auth_menu = st.radio("", ["Login", "Register", "Forgot Password"], horizontal=True, label_visibility="collapsed")
         
-        if auth_menu == "Đăng ký":
-            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">✍️ Đăng ký tài khoản</p>', unsafe_allow_html=True)
+        if auth_menu == "Register":
+            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">✍️ Register Account</p>', unsafe_allow_html=True)
             
             email = st.text_input("Email", type="default", placeholder="your.email@example.com")
-            password = st.text_input("Mật khẩu", type="password", placeholder="••••••••")
-            full_name = st.text_input("Họ tên", placeholder="Nhập họ và tên của bạn")
+            password = st.text_input("Password", type="password", placeholder="••••••••")
+            full_name = st.text_input("Full Name", placeholder="Enter your full name")
             
-            if st.button("🚀 Đăng ký"):
+            if st.button("🚀 Register"):
                 from auth import register_user
                 success, msg = register_user(email, password, full_name)
                 if success:
                     st.success(msg)
-                    st.info("📧 Vui lòng kiểm tra hộp thư để xác minh tài khoản trước khi đăng nhập.")
+                    st.info("📧 Please check your inbox to verify your account before logging in.")
                 else:
                     st.error(msg)
 
-        elif auth_menu == "Đăng nhập":
-            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">🔑 Đăng nhập</p>', unsafe_allow_html=True)
+        elif auth_menu == "Login":
+            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">🔑 Login</p>', unsafe_allow_html=True)
             
-            email = st.text_input("Email đăng nhập", placeholder="your.email@example.com")
-            password = st.text_input("Mật khẩu", type="password", placeholder="••••••••")
+            email = st.text_input("Login Email", placeholder="your.email@example.com")
+            password = st.text_input("Password", type="password", placeholder="••••••••")
             
-            if st.button("🔓 Đăng nhập"):
+            if st.button("🔓 Login"):
                 from auth import login_user
                 success, msg = login_user(email, password)
                 if success:
@@ -436,28 +435,29 @@ with st.sidebar:
                 else:
                     st.error(msg)
 
-        elif auth_menu == "Quên mật khẩu":
-            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">📧 Đặt lại mật khẩu</p>', unsafe_allow_html=True)
+        elif auth_menu == "Forgot Password":
+            st.markdown('<p style="font-weight: 600; font-size: 16px; margin-bottom: 10px;">📧 Reset Password</p>', unsafe_allow_html=True)
             
-            email = st.text_input("Nhập email đã đăng ký", placeholder="your.email@example.com")
+            email = st.text_input("Enter your registered email", placeholder="your.email@example.com")
             
-            if st.button("Gửi email đặt lại mật khẩu"):
+            if st.button("Send password reset email"):
                 from auth import supabase
                 try:
                     res = supabase.auth.reset_password_for_email(email)
-                    st.success("📬 Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư đến.")
+                    st.success("📬 Password reset email sent. Please check your inbox.")
                 except Exception as e:
-                    st.error(f"❌ Lỗi khi gửi email: {e}")
+                    st.error(f"❌ Error sending email: {e}")
         
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         # HIỂN THỊ THÔNG TIN NGƯỜI DÙNG ĐÃ ĐĂNG NHẬP
-        full_name = st.session_state["user"].get("full_name", "bạn")
+        full_name = st.session_state["user"].get("full_name", "you")
         
         # Lấy thông tin credits
         user_id = st.session_state["user"]["id"]
         credit_data = supabase.table("user_credits").select("credits").eq("id", user_id).execute()
         credits = credit_data.data[0]["credits"] if credit_data.data else 0
+
         
         st.markdown(f"""
             <div class="custom-container" style="padding: 15px; margin-bottom: 20px;">
@@ -489,7 +489,7 @@ with st.sidebar:
                 margin-bottom: 15px;">
                 <span style="font-size: 24px; margin-right: 10px;">💎</span>
                 <div>
-                    <div style="font-size: 0.9rem; opacity: 0.8;">Tín dụng hiện có</div>
+                    <div style="font-size: 0.9rem; opacity: 0.8;">Credits: </div>
                     <div style="font-weight: bold;">{credits:,} credits</div>
                 </div>
             </div>
@@ -518,28 +518,28 @@ with st.sidebar:
         }
     )
     if "user" in st.session_state:
-        if st.button("🚪 Đăng xuất", key="logout_button"):
+        # Nút đăng xuất
+        if st.button("🚪 Logout", key="logout_button"):
             del cookies["user_email"]
             del st.session_state['user']
             cookies.save()
-            st.success("✅ Đã đăng xuất.")
+            st.success("✅ Logged out successfully.")
             st.rerun()
 
-        
         # Hiển thị chatbot
         display_chatbot()
 
 
 # 🚫 Chặn menu nếu chưa đăng nhập
-protected_menus = ["Create Lyrics", "Feel The Beat", "Classify", "Explore", "Library","Quản lý thanh toán"]
+protected_menus = ["Create Lyrics", "Feel The Beat", "Classify", "Explore", "Library","Payment"]
 
 if menu in protected_menus and "user" not in st.session_state:
     st.markdown("""
         <div class="custom-container" style="text-align: center; padding: 40px 20px;">
             <div style="font-size: 60px; margin-bottom: 20px;">🔒</div>
-            <h2 style="margin-bottom: 20px;">Vui lòng đăng nhập</h2>
+            <h2 style="margin-bottom: 20px;">Please log in</h2>
             <p style="margin-bottom: 30px; color: rgba(255,255,255,0.7);">
-                Bạn cần đăng nhập để truy cập chức năng này.
+                You need to log in to access this feature.
             </p>
             <div style="
                 background: linear-gradient(45deg, rgba(255,126,95,0.2), rgba(254,180,123,0.2));
@@ -548,11 +548,12 @@ if menu in protected_menus and "user" not in st.session_state:
                 max-width: 400px;
                 margin: 0 auto;
                 ">
-                <p>👉 Sử dụng form đăng nhập ở menu bên trái để tiếp tục.</p>
+                <p>👉 Use the login form in the left menu to continue.</p>
             </div>
         </div>
     """, unsafe_allow_html=True)
     st.stop()
+
 
 def handle_empty_title(music_data):
     """Kiểm tra và điền tên bài hát nếu bị rỗng."""
@@ -573,6 +574,7 @@ def handle_empty_title(music_data):
     return music_data
 
 
+
 # =========== TRANG HOME ===========
 if menu == "Home":
     st.markdown("""
@@ -585,7 +587,7 @@ if menu == "Home":
             ASTRONAUT MUSIC
         </div>
         <div style="font-size: 1.5rem; color: rgba(255,255,255,0.8); font-weight: 300">
-            Tạo nhạc và lời bài hát bằng công nghệ AI tiên tiến
+            Create music and lyrics with advanced AI technology
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -593,15 +595,15 @@ if menu == "Home":
 
     
     # HOT IN APRIL SECTION
-    st.markdown("<h2 style='text-align: left; margin-top: 1rem;'>🔥 Bài Hát Hot Trong Tháng 4</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: left; margin-top: 1rem;'>🔥 Hot Songs in April</h2>", unsafe_allow_html=True)
 
     public_songs = supabase.table("songs").select("*").eq("is_public", True).order("created_at", desc=True).execute()
     user_profiles = supabase.table("user_profiles").select("id, full_name").execute()
     user_map = {u["id"]: u["full_name"] for u in user_profiles.data}
 
-    public_songs = supabase.table("songs").select("*").eq("is_public", True).order("created_at", desc=True).execute()
-    user_profiles = supabase.table("user_profiles").select("id, full_name").execute()
-    user_map = {u["id"]: u["full_name"] for u in user_profiles.data}
+    # public_songs = supabase.table("songs").select("*").eq("is_public", True).order("created_at", desc=True).execute()
+    # user_profiles = supabase.table("user_profiles").select("id, full_name").execute()
+    # user_map = {u["id"]: u["full_name"] for u in user_profiles.data}
 
     if public_songs.data:
         songs = public_songs.data
@@ -609,7 +611,7 @@ if menu == "Home":
         slides_html = ""
         for idx, song in enumerate(songs):
             title = song.get("title", "Untitled")
-            artist = user_map.get(song["user_id"], "Ẩn danh")
+            artist = user_map.get(song["user_id"], "Anonymous")
             image = song.get("image_url", "https://via.placeholder.com/300x180.png?text=No+Cover")
             audio = song.get("audio_url")
             duration = song.get("duration", 0)
@@ -715,17 +717,17 @@ if menu == "Home":
         components.html(full_html, height=850 )
 
     else:
-        st.info("🙈 Chưa có bài hát nào được chia sẻ.")
-    # Thẻ thông tin tính năng
+        st.info("🙈 No public songs shared yet.")
+    # Feature information section
     features_col1, features_col2, features_col3 = st.columns(3)
     
     with features_col1:
         st.markdown("""
         <div class="custom-container" style="height: 100%; text-align: center; padding: 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">✏️</div>
-            <h3 style="margin-bottom: 10px;">Tạo lời bài hát</h3>
+            <h3 style="margin-bottom: 10px;">Create Lyrics</h3>
             <p style="color: rgba(255,255,255,0.7);">
-                Dùng AI để viết lời bài hát theo phong cách và cảm xúc bạn mong muốn
+                Use AI to write song lyrics in the style and emotion you desire
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -734,9 +736,9 @@ if menu == "Home":
         st.markdown("""
         <div class="custom-container" style="height: 100%; text-align: center; padding: 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🎵</div>
-            <h3 style="margin-bottom: 10px;">Sáng tạo âm nhạc</h3>
+            <h3 style="margin-bottom: 10px;">Create Music</h3>
             <p style="color: rgba(255,255,255,0.7);">
-                Tạo ra các bản nhạc độc đáo với AI theo phong cách riêng của bạn
+                Create unique music tracks with AI in your own style
             </p>
         </div>
         """, unsafe_allow_html=True)
@@ -745,12 +747,13 @@ if menu == "Home":
         st.markdown("""
         <div class="custom-container" style="height: 100%; text-align: center; padding: 20px;">
             <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
-            <h3 style="margin-bottom: 10px;">Phân tích thể loại</h3>
+            <h3 style="margin-bottom: 10px;">Genre Analysis</h3>
             <p style="color: rgba(255,255,255,0.7);">
-                Phân tích và xác định thể loại nhạc từ file âm thanh của bạn
+                Analyze and identify music genre from your audio file
             </p>
         </div>
         """, unsafe_allow_html=True)
+
 
 
 
@@ -762,31 +765,31 @@ if menu == "Create Lyrics":
     col1, col2 = st.columns([3, 5])
     with col1:
         # Người dùng nhập thể loại nhạc và chủ đề
-        genre = st.text_area("🎼 Chọn thể loại nhạc: ",
-                            placeholder="Pop, Rock, Hip-Hop, Jazz, Ballad, EDM,....")
-        mood = st.text_area("🎭 Chọn cảm xúc: ",
-                            placeholder="Vui vẻ, Buồn, Hào hứng, Thư giãn, Kịch ,....")
-        theme = st.text_area("✍️ Mô tả bản nhạc bạn muốn tạo:",
-                            placeholder="Tình yêu, Mùa thu, Tuổi trẻ, ...")
+        genre = st.text_area("🎼 Choose music genre: ",
+                             placeholder="Pop, Rock, Hip-Hop, Jazz, Ballad, EDM,....")
+        mood = st.text_area("🎭 Choose mood: ",
+                            placeholder="Happy, Sad, Excited, Relaxed, Dramatic, ....")
+        theme = st.text_area("✍️ Describe the song you want to create:",
+                             placeholder="Love, Autumn, Youth, ...")
         if "lyrics_input" in st.session_state:
             lyrics = st.session_state.lyrics_input
         else:
             lyrics = ""
-        if st.button("🎤 Sáng tác ngay!"):
+        if st.button("🎤 Create now!"):
             if theme.strip():
-                with st.spinner("🎶 AI đang sáng tác lời bài hát cho bạn..."):
-                    prompt = f"Hãy viết lời bài hát thể loại {genre} về chủ đề '{theme}', với cảm xúc {mood}."
+                with st.spinner("🎶 AI is creating lyrics for you..."):
+                    prompt = f"Write a {genre} song about '{theme}', with the mood of {mood}."
                     lyrics = generate_lyrics(prompt)
             else:
-                st.warning("⚠️ Vui lòng nhập chủ đề bài hát trước khi tạo!")
+                st.warning("⚠️ Please enter a song theme before creating!")
     with col2:
-    # Hiển thị text_area và lưu giá trị trực tiếp vào lyrics    
-        lyrics_input = st.text_area("🎼 Lời bài hát AI tạo:", lyrics, height=370)
-    # Kiểm tra nếu nội dung text_area thay đổi và tự động sao chép vào clipboard
+        # Hiển thị text_area và lưu giá trị trực tiếp vào lyrics    
+        lyrics_input = st.text_area("🎼 Lyrics created by AI:", lyrics, height=370)
+        # Kiểm tra nếu nội dung text_area thay đổi và tự động sao chép vào clipboard
         st.session_state.lyrics_input = lyrics
     
         if st.button("Copy Lyrics"):
-                # pyperclip.copy(lyrics_input)  # Sao chép lyrics vào clipboard
+                # pyperclip.copy(lyrics_input)  # Copy lyrics to clipboard
                 lyrics = lyrics_input
                 st.session_state.lyrics = lyrics
                 st.success("Lyrics have been copied to clipboard and Feel The Beat")  # Hiển thị thông báo thành công
@@ -799,117 +802,132 @@ if menu == "Create Lyrics":
 
 # Nếu chọn "Classify", hiển thị nội dung này
 if menu == "Classify":
-    #define function to convert mp3 to wav format
-    def convert_mp3_to_wav(music_file):  
-        sound = AudioSegment.from_mp3(music_file)
-        sound.export("music_file.wav",format="wav")
-      
-    #define funciton to produce and save mel spectogram
-    def create_melspectrogram(wav_file):  
-        y,sr = librosa.load(wav_file)  
-        mel_spec = librosa.power_to_db(librosa.feature.melspectrogram(y=y,sr=sr))    
-        plt.figure(figsize=(10, 5))
-        plt.axes([0., 0., 1., 1.], frameon=False, xticks=[], yticks=[])
-        librosa.display.specshow(mel_spec, x_axis="time", y_axis='mel', sr=sr)
-        plt.margins(0)
-        plt.savefig('melspectrogram.png')
+    st.markdown("<h1 style='text-align: center; color: white;'>Music Genre Recognition</h1>", unsafe_allow_html=True)
+
+    # Upload file mp3
+    st.write("## Upload an MP3 file to classify:")
+    mp3_file = st.file_uploader("Upload an audio file", type=["mp3"], label_visibility="collapsed")    
     
-    #define function to build CNN model
-    def GenreModel(input_shape = (100,200,4),classes=9):
-        
-        X_input = Input(input_shape)
-        
-        classifier = Sequential()
-    
-        classifier.add(Conv2D(8, (3, 3), input_shape = input_shape, activation = 'relu'))
-        classifier.add(Activation('relu'))
-        classifier.add(MaxPooling2D(pool_size = (2, 2)))
-    
-        classifier.add(Conv2D(16, (3, 3), activation = 'relu'))
-        classifier.add(Activation('relu'))
-        classifier.add(MaxPooling2D(pool_size = (2, 2)))
-    
-        classifier.add(Conv2D(32, (3, 3), activation = 'relu'))
-        classifier.add(Activation('relu'))
-        classifier.add(MaxPooling2D(pool_size = (2, 2)))
-    
-        classifier.add(Conv2D(64, (3, 3), activation = 'relu'))
-        classifier.add(Activation('relu'))
-        classifier.add(MaxPooling2D(pool_size = (2, 2)))
-    
-        classifier.add(Conv2D(128, (3, 3), activation = 'relu'))
-        classifier.add(Activation('relu'))
-        classifier.add(MaxPooling2D(pool_size = (2, 2)))
-    
-        classifier.add(Flatten())
-        
-        classifier.add(Dropout(0.5))
-        classifier.add(Dense(units = 256, activation = 'relu', kernel_regularizer=regularizers.l2(0.0001)))
-        classifier.add(Dropout(0.25))
-        classifier.add(Dense(units = 10, activation = 'softmax'))
-        classifier.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-        return classifier
-    
-    #define function to predict music genre based on mel spectogram
-    def predict(image_data, model):   
-        image = img_to_array(image_data)   
-        image = np.reshape(image,(1,100,200,4))   
-        prediction = model.predict(image/255)   
-        prediction = prediction.reshape((10,))     
-        class_label = np.argmax(prediction)     
-        return class_label, prediction
-    
-    
-    class_labels = ['blues', 'classical', 'country', 'disco', 'hiphop', 'jazz', 'metal',  'pop',  'reggae', 'rock']
-        
-        
-    
-    #configure sidebar - upload mp3 file and visualize it
-    st.sidebar.write("## Upload the mp3 file of a music of your choice:")
-    mp3_file = st.sidebar.file_uploader("Upload an audio file", type=["mp3"], label_visibility="collapsed")    
-    
-    
-    #configure model prediction and content to appear when music is uploaded
-    if mp3_file is not None:    
-      st.sidebar.write("**Play the song below if you want!**")
-      st.sidebar.audio(mp3_file,"audio/mp3")
-      
-      model = GenreModel(input_shape=(100,200,4),classes=10)
-      model.load_weights("music_genre_recog_model.h5")
-      
-      convert_mp3_to_wav(mp3_file)
-      audio_full = AudioSegment.from_wav('music_file.wav')
-      
-      class_labels_total = []
-      predictions_total = []
-      for w in range(int(round(len(audio_full)/3000,0))):
-          audio_3sec = audio_full[3*(w)*1000:3*(w+1)*1000]
-          audio_3sec.export(out_f = "audio_3sec.wav", format = "wav")
-          create_melspectrogram("audio_3sec.wav")
-          image_data = load_img('melspectrogram.png', color_mode='rgba', target_size=(100,200))   
-          class_label, prediction = predict(image_data, model)
-          prediction = prediction.reshape((10,)) 
-          class_labels_total.append(class_label)
-          predictions_total.append(prediction)
-      
-      class_label_final = mode(class_labels_total)
-      predictions_final = np.mean(predictions_total, axis=0)
-      
-      color_data = [1,2,3,4,5,6,7,8,9,10]
-      my_cmap = cm.get_cmap('Blues')
-      my_norm = Normalize(vmin=0, vmax=10)
-      fig,ax= plt.subplots(figsize=(10,5))
-      ax.bar(x=class_labels,height=predictions_final, color=my_cmap(my_norm(color_data)))
-      ax.spines['top'].set_visible(False)
-      ax.spines['right'].set_visible(False)
-      ax.spines['left'].set_visible(False)
-      ax.spines['bottom'].set_color('#DDDDDD')
-      ax.tick_params(bottom=False, left=False)
-      plt.savefig("prob_distribution_genres.png",format='png', dpi=1000, transparent=True)
-      
-      st.markdown("<h4 style='text-align: center; color: black;'>The genre of your song is: {} </h4>".format(class_labels[class_label_final]), unsafe_allow_html=True) 
-      st.markdown("<h4 style='text-align: center; color: black;'></h4>", unsafe_allow_html=True) 
-      st.image("prob_distribution_genres.png", use_column_width=True, caption="Probability Distribution Of The Given Song Over Different Genres")
+    if mp3_file is not None:
+        st.write("**Play the song below:**")
+        st.audio(mp3_file, "audio/mp3")
+
+        # Hàm chuyển đổi MP3 sang WAV
+        def convert_mp3_to_wav(music_file):  
+            sound = AudioSegment.from_mp3(music_file)
+            sound.export("music_file.wav", format="wav")
+
+        # Hàm tạo Mel Spectrogram
+        def create_melspectrogram(wav_file):  
+            y, sr = librosa.load(wav_file)  
+            mel_spec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr))    
+            plt.figure(figsize=(10, 5))
+            plt.axes([0., 0., 1., 1.], frameon=False, xticks=[], yticks=[])
+            librosa.display.specshow(mel_spec, x_axis="time", y_axis='mel', sr=sr)
+            plt.margins(0)
+            plt.savefig('melspectrogram.png')
+            plt.close()  # Đóng hình để giải phóng bộ nhớ
+
+            # # Kiểm tra xem hình ảnh đã được tạo ra thành công
+            # if os.path.exists('melspectrogram.png'):
+            #     st.success("Mel Spectrogram đã được tạo thành công.")
+            # else:
+            #     st.error("Không thể tạo Mel Spectrogram.")
+            from PIL import Image
+            
+            try:
+                img = Image.open('melspectrogram.png')
+                img.show()  # Hiển thị hình ảnh
+            except Exception as e:
+                st.error(f"Lỗi khi mở hình ảnh: {e}")
+
+        # Xây dựng mô hình CNN
+        def GenreModel(input_shape=(100,200,4), classes=10):
+            classifier = Sequential()
+            classifier.add(Conv2D(8, (3, 3), input_shape=input_shape, activation='relu'))
+            classifier.add(MaxPooling2D(pool_size=(2, 2)))
+            classifier.add(Conv2D(16, (3, 3), activation='relu'))
+            classifier.add(MaxPooling2D(pool_size=(2, 2)))
+            classifier.add(Conv2D(32, (3, 3), activation='relu'))
+            classifier.add(MaxPooling2D(pool_size=(2, 2)))
+            classifier.add(Conv2D(64, (3, 3), activation='relu'))
+            classifier.add(MaxPooling2D(pool_size=(2, 2)))
+            classifier.add(Conv2D(128, (3, 3), activation='relu'))
+            classifier.add(MaxPooling2D(pool_size=(2, 2)))
+            classifier.add(Flatten())
+            classifier.add(Dropout(0.5))
+            classifier.add(Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.0001)))
+            classifier.add(Dropout(0.25))
+            classifier.add(Dense(10, activation='softmax'))
+            classifier.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+            return classifier
+
+        # Dự đoán thể loại nhạc
+        def predict(image_data, model):   
+            image = img_to_array(image_data)   
+            image = np.reshape(image, (1, 100, 200, 4))   
+            prediction = model.predict(image / 255)   
+            prediction = prediction.reshape((10,))     
+            class_label = np.argmax(prediction)     
+            return class_label, prediction
+
+        # Nhãn của các thể loại nhạc
+        class_labels = ['blues', 'classical', 'country', 'disco', 'hiphop', 'jazz', 'metal', 'pop', 'reggae', 'rock']
+
+        # Load mô hình
+        model = GenreModel(input_shape=(100, 200, 4), classes=10)
+        model.load_weights("music_genre_recog_model.h5")
+
+        # Hiệu ứng loading
+        with st.spinner("🔍 Analyzing music genre..."):
+            time.sleep(2)
+
+        # Chuyển đổi file và tạo spectrogram
+        convert_mp3_to_wav(mp3_file)
+        audio_full = AudioSegment.from_wav('music_file.wav')
+
+        class_labels_total = []
+        predictions_total = []
+        for w in range(int(round(len(audio_full) / 3000, 0))):
+            audio_3sec = audio_full[3 * (w) * 1000: 3 * (w + 1) * 1000]
+            audio_3sec.export(out_f="audio_3sec.wav", format="wav")
+            create_melspectrogram("audio_3sec.wav")
+            image_data = load_img('melspectrogram.png', color_mode='rgba', target_size=(100, 200))   
+            class_label, prediction = predict(image_data, model)
+            class_labels_total.append(class_label)
+            predictions_total.append(prediction)
+
+        # Lấy thể loại có dự đoán cao nhất
+        class_label_final = mode(class_labels_total)
+        predictions_final = np.mean(predictions_total, axis=0)
+
+        # Hiển thị kết quả
+        st.success(f"✅ The genre of your song is: **{class_labels[class_label_final]}**")
+        # Hiển thị biểu đồ với nền tối
+        # Hiển thị biểu đồ với nền tối
+        fig, ax = plt.subplots(figsize=(10, 5))
+
+        # Thiết lập màu nền của biểu đồ
+        fig.patch.set_facecolor('#0E0808')  # Màu nền của biểu đồ
+        ax.set_facecolor('#0E0808')  # Màu nền của trục
+
+        # Thiết lập màu cho các thanh trong biểu đồ
+        ax.bar(class_labels, predictions_final, color=cm.viridis(np.linspace(0, 1, len(class_labels))))
+
+        # Thiết lập các yếu tố hiển thị khác
+        ax.set_xlabel("Music Genre", color='white', fontsize=16)  # Màu chữ cho trục X và cỡ chữ
+        ax.set_ylabel("Prediction Probability", color='white', fontsize=16)  # Màu chữ cho trục Y và cỡ chữ
+        ax.set_title("Genre Prediction Probability Distribution", color='white', fontsize=18)  # Màu chữ cho tiêu đề và cỡ chữ
+
+        # Thiết lập các nhãn trục X với chữ không in đậm và kích thước chữ lớn hơn
+        ax.set_xticklabels(class_labels, rotation=45, color='white', fontsize=14)
+
+        # Xóa các đường kẻ ô (gridlines)
+        ax.grid(False)
+
+        # Hiển thị biểu đồ trong Streamlit
+        st.pyplot(fig)
+
 
 
 
@@ -937,8 +955,9 @@ async def generate_music(api_token, prompt, custom_mode, style, title, instrumen
             "callBackUrl": "https://api.example.com/callback"
         }
 
-    with st.spinner("🎼 Đang tạo nhạc..."):
+    with st.spinner("🎼 Đang tạo nhạc..."):  # Đang tạo nhạc...
         response = await asyncio.to_thread(requests.post, api_url, json=data, headers=headers)
+    
     # Kiểm tra mã trạng thái của phản hồi từ API
     if response.status_code == 200:
         try:
@@ -964,7 +983,7 @@ async def generate_music(api_token, prompt, custom_mode, style, title, instrumen
         st.write("📄 Nội dung lỗi:", response.text)
     return None
 
-# Hàm kiểm tra và hiển thị nhạc
+# Function to check and display music
 async def check_music_status(api_token, task_id):
     check_url = f"https://apibox.erweima.ai/api/v1/generate/record-info?taskId={task_id}"
     headers = {"Authorization": f"Bearer {api_token}", "Accept": "application/json"}
@@ -972,7 +991,7 @@ async def check_music_status(api_token, task_id):
     if "user" in st.session_state and "email" in st.session_state["user"]:
         user_email = st.session_state["user"]["email"]  # Lấy email từ session
 
-        # Truy vấn user_id từ bảng user_profiles
+        # Query user_id from user_profiles table
         user_profile = supabase.table("user_profiles").select("id").eq("email", user_email).execute()
 
         if user_profile.data:
@@ -995,7 +1014,7 @@ async def check_music_status(api_token, task_id):
                     suno_data = data.get("response", {}).get("sunoData", [])
                     if suno_data:
 
-                        # Lưu bài hát vào cơ sở dữ liệu (bảng songs)
+                        # Save songs into the database (songs table)
                         for song in suno_data:
                             song_data = {
                                 #"user_id": st.session_state["user"]["id"],  # Liên kết với user_id
@@ -1007,7 +1026,7 @@ async def check_music_status(api_token, task_id):
                                 "model_name": song.get("modelName"),
                                 "duration": song.get("duration")
                             }
-                            # Lưu vào bảng songs trong Supabase
+                            # Save into songs table in Supabase
                             supabase.table("songs").insert(song_data).execute()
 
                         return [(item.get("audioUrl"), item.get("title"), item.get("imageUrl")) for item in suno_data]
@@ -1020,6 +1039,7 @@ async def check_music_status(api_token, task_id):
             break
         time.sleep(5)  # Chờ 5 giây trước khi kiểm tra lại
     return None
+
 
 def render_music_player(title, audio_url, image_url):
     """
@@ -1075,9 +1095,9 @@ def render_music_player(title, audio_url, image_url):
         unsafe_allow_html=True,
     )
     
-    col1, col2 = st.columns([1, 5])
+    col1, col2 = st.columns([2, 5])
     with col1:
-        st.image(image_url, width=150)
+        st.image(image_url, width=250)
     with col2:
         st.markdown(f'<div class="song-title">{title}</div>', unsafe_allow_html=True)
         st.audio(audio_url, format="audio/mp3")
@@ -1126,8 +1146,9 @@ def render_game_html():
     st.components.v1.html(game_html, height=320)
 
 
+
 async def Feel_The_Beat():
-    st.title("🎵 Feel The Beat - Tạo Nhạc AI")
+    st.title("🎵 Feel The Beat - AI Music Generator")
     api_token = "2d551602f3a39d8f3e219db2c94d7659"
 
     custom_mode = st.toggle("Custom Mode", value=True)
@@ -1138,10 +1159,10 @@ async def Feel_The_Beat():
             if "lyrics" in st.session_state:
                 lyrics = st.session_state.lyrics
                 prompt = st.text_area("💡 Enter a description of the track you want to create:", 
-                    value=lyrics, placeholder="A relaxing piano piece with a gentle melody...",height=300)
+                    value=lyrics, placeholder="A relaxing piano piece with a gentle melody...", height=300)
             else:
                 prompt = st.text_area("💡 Enter a description of the track you want to create:", 
-                    placeholder="A relaxing piano piece with a gentle melody...",height=300)
+                    placeholder="A relaxing piano piece with a gentle melody...", height=300)
             style = "Classical"  # Gán giá trị mặc định nếu custom_mode tắt
             title = "My AI Music"  # Gán title mặc định nếu custom_mode tắt
             instrumental = st.checkbox("🎻 Instrumental", value=False)
@@ -1157,11 +1178,11 @@ async def Feel_The_Beat():
             if "lyrics" in st.session_state:
                 lyrics = st.session_state.lyrics
                 prompt = st.text_area("💡 Enter a description of the track you want to create:", 
-                    value=lyrics, placeholder="A relaxing piano piece with a gentle melody...",height=300)
+                    value=lyrics, placeholder="A relaxing piano piece with a gentle melody...", height=300)
             else:
                 prompt = st.text_area("💡 Enter a description of the track you want to create:", 
-                    placeholder="A relaxing piano piece with a gentle melody...",height=300)
-        # Danh sách gợi ý phong cách nhạc
+                    placeholder="A relaxing piano piece with a gentle melody...", height=300)
+            # Danh sách gợi ý phong cách nhạc
             music_styles = ["Classical", "Jazz", "Lo-fi", "Ambient", "Rock"]
 
             # Nếu chưa có session_state cho style_list, đặt giá trị mặc định
@@ -1203,7 +1224,7 @@ async def Feel_The_Beat():
     if feel_the_beat:
         # ✅ Kiểm tra user đã đăng nhập
         if "user" not in st.session_state:
-            st.warning("🔐 Bạn cần đăng nhập để sử dụng tính năng này.")
+            st.warning("🔐 You need to log in to use this feature.")
             st.stop()
 
         user_id = st.session_state["user"]["id"]
@@ -1213,7 +1234,7 @@ async def Feel_The_Beat():
         current_credits = credit_data.data[0]["credits"] if credit_data.data else 0
 
         if current_credits < 25:
-            st.error("❌ Bạn không đủ 25 tín dụng để sử dụng chức năng này. Vui lòng nạp thêm.")
+            st.error("❌ You do not have enough credits (25) to use this feature. Please top up.")
             st.stop()
 
         # ✅ Xóa nhạc cũ nếu có
@@ -1221,7 +1242,7 @@ async def Feel_The_Beat():
             del st.session_state["music_data"]
 
         if not api_token or not prompt:
-            st.warning("⚠️Please enter music description!")
+            st.warning("⚠️ Please enter music description!")
         else:
             task_id = await generate_music(api_token, prompt, custom_mode, style, title, instrumental)
             if task_id:
@@ -1243,15 +1264,6 @@ async def Feel_The_Beat():
             else:
                 st.error("🚨 Error in music generation!")
 
-
-
-
-    # Kiểm tra nếu có nhạc đã tạo trong session_state
-    if "music_data" in st.session_state:
-        music_data = st.session_state["music_data"]
-        for audio_url, title, image_url in music_data:
-            st.success(f"🎵 Your music is ready: [{title}]")
-            render_music_player(title, audio_url, image_url)
 if menu == "Feel The Beat":
     asyncio.run(Feel_The_Beat())
 
@@ -1269,11 +1281,11 @@ if menu == "Library":
             if songs.data:
                 st.subheader("🎶 Your Music Library")
 
-                # ✅ Sắp xếp bài public lên đầu
+                # ✅ Sort public songs to the top
                 sorted_songs = sorted(songs.data, key=lambda x: not x.get("is_public", False))
 
                 for song in sorted_songs:
-                    # Tạo 2 cột: 1 bên ảnh + switch, 1 bên audio + info
+                    # Create 2 columns: one for image + switch, one for audio + info
                     col1, col2 = st.columns([4, 1])
 
                     with col1:
@@ -1283,7 +1295,7 @@ if menu == "Library":
                         with col3:
                             is_public = song.get("is_public", False)
                             new_status = st_toggle_switch(
-                                label="Public",  # Label chữ Public
+                                label="Public",  # Label for Public
                                 key=f"toggle_{song['id']}",
                                 default_value=is_public,
                                 label_after=False,
@@ -1294,43 +1306,39 @@ if menu == "Library":
                             if new_status != is_public:
                                 supabase.table("songs").update({"is_public": new_status}).eq("id", song["id"]).execute()
                         with col4:
-                         # Thêm nút xóa bài hát dưới phần switch public
-                            delete_button = st.button(f"🗑️ Xóa", key=f"delete_{song['id']}")
+                            # Add delete button below the public switch
+                            delete_button = st.button(f"🗑️ Delete", key=f"delete_{song['id']}")
 
                             if delete_button:
-                                # Hiển thị hộp chọn xác nhận trước khi xóa
+                                # Show confirmation box before deletion
                                 confirm_delete = st.selectbox(
-                                    "Bạn có chắc chắn muốn xóa bài hát này?",
-                                    ["Chắc chắn", "Không"]
+                                    "Are you sure you want to delete this song?",
+                                    ["Sure", "No"]
                                 )
 
-                                if confirm_delete == "Chắc chắn":
-                                    # Xóa bài hát khỏi Supabase (cả cơ sở dữ liệu SQL)
+                                if confirm_delete == "Sure":
+                                    # Delete the song from Supabase (SQL database)
                                     supabase.table("songs").delete().eq("id", song["id"]).execute()
 
-                                    # Thông báo thành công
-                                    st.success(f"Bài hát '{song['title']}' đã được xóa thành công.")
+                                    # Success message
+                                    st.success(f"The song '{song['title']}' has been successfully deleted.")
                                     
-                                    # Làm mới lại danh sách bài hát sau khi xóa
+                                    # Refresh the song list after deletion
                                     songs = supabase.table("songs").select("*").eq("user_id", user_id).execute()
-                                    st.rerun()  # Tải lại trang để làm mới danh sách
+                                    st.rerun()  # Reload the page to refresh the list
 
                     with col2:
-
-                        #render_music_player(song['title'], song['audio_url'], song['image_url'])
-                        
-                        # Giả sử song['prompt'] là một chuỗi dà
-
                         st.write(f"⏱ Duration: {song['duration']} seconds")
                         st.write(f"🎧 Model: {song['model_name']}")
                         st.write(f"🗓 Created at: {song['created_at']}")
                     st.markdown("---")
             else:
-                st.info("🎵 Bạn chưa có bài hát nào.")
+                st.info("🎵 You don't have any songs yet.")
         else:
-            st.error("❌ Không tìm thấy thông tin người dùng.")
+            st.error("❌ User information not found.")
     else:
-        st.warning("🔒 Vui lòng đăng nhập để xem thư viện của bạn.")
+        st.warning("🔒 Please log in to view your library.")
+####################Paymnet#######################
 
 # MoMo config
 MOMO_CONFIG = {
@@ -1338,7 +1346,7 @@ MOMO_CONFIG = {
     "PartnerCode": "MOMO",
     "AccessKey": "F8BBA842ECF85",
     "SecretKey": "K951B6PE1waDMi640xX08PD3vg6EkVlz",
-    "ReturnUrl": "https://music-genre-recognition-347zj019o38.streamlit.app/",
+    "ReturnUrl": "https://music-genre-recognition-tgb7vn53e6mscxndav2ph6.streamlit.app/",
     "IpnUrl": "https://webhook.site/b052aaf4-3be0-43c5-8bad-996d2d0c0e54",
     "RequestType": "captureWallet",
     "ExtraData": "Astronaut_Music_payment"
@@ -1707,6 +1715,3 @@ if menu == "Payment":
     if not order_id_param:
         pending_query = supabase.table("pending_payments").select("*").eq("user_id", user_id).execute()
         pending_data = pending_query.data[0] if pending_query.data else None
-
-
-
