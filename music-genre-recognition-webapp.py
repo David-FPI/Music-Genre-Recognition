@@ -820,12 +820,14 @@ if menu == "Classify":
         def create_melspectrogram(wav_file):  
             # Load audio file
             y, sr = librosa.load(wav_file)  
-            mel_spec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr))    
+            mel_spec = librosa.feature.melspectrogram(y=y, sr=sr)  
+            mel_spec_db = librosa.power_to_db(mel_spec)  # Convert to dB scale for better visualization
             
             # Create mel spectrogram plot
             plt.figure(figsize=(10, 5))
             plt.axes([0., 0., 1., 1.], frameon=False, xticks=[], yticks=[])
-            librosa.display.specshow(mel_spec, x_axis="time", y_axis='mel', sr=sr)
+            img = librosa.display.specshow(mel_spec_db, x_axis="time", y_axis='mel', sr=sr)
+            plt.colorbar(img)
             plt.margins(0)
             
             # Save the plot as an image
