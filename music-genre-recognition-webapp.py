@@ -821,7 +821,8 @@ if menu == "Classify":
             librosa.display.specshow(mel_spec, x_axis="time", y_axis='mel', sr=sr)
             plt.margins(0)
             plt.savefig('melspectrogram.png')
-    
+            plt.close()  # Đóng ảnh sau khi lưu
+            
         # Xây dựng mô hình CNN
         def GenreModel(input_shape=(100,200,4), classes=10):
             classifier = Sequential()
