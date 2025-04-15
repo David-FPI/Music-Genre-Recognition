@@ -526,8 +526,6 @@ with st.sidebar:
             st.success("✅ Logged out successfully.")
             st.rerun()
 
-        # Hiển thị chatbot
-        display_chatbot()
 
 
 # 🚫 Chặn menu nếu chưa đăng nhập
