@@ -22,17 +22,16 @@ def register_user(email, password, full_name):
         # Kiểm tra định dạng email
         email_regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
         if not re.match(email_regex, email):
-            return False, "❌ Email không hợp lệ."
+            return False, "❌ Invalid email format."
 
         # Đăng ký tài khoản
         res = supabase.auth.sign_up({
             "email": email,
             "password": password,
-            
         })
 
         if not res.user:
-            return False, "⚠️ Không thể đăng ký tài khoản, vui lòng thử lại."
+            return False, "⚠️ Unable to register account, please try again."
         
         # Tạo hồ sơ người dùng trong bảng user_profiles
         supabase.table("user_profiles").insert({
@@ -42,16 +41,16 @@ def register_user(email, password, full_name):
             "role": "client"
         }).execute()
 
-        # Khởi tạo tín dụng cho người dùng mới (0 tín dụng ban đầu)
+        # Khởi tạo tín dụng cho người dùng mới (75 tín dụng ban đầu)
         supabase.table("user_credits").insert({
             "id": res.user.id,
             "credits": 75
         }).execute()
     
-        return True, f"✅ Đăng ký thành công! Vui lòng xác minh email: {email}"
+        return True, f"✅ Registration successful! Please verify your email: {email}"
 
     except Exception as e:
-        return False, f"❌ Lỗi đăng ký: {str(e)}"
+        return False, f"❌ Registration error: {str(e)}"
 
 # =============================
 # 2. ĐĂNG NHẬP
@@ -68,7 +67,7 @@ def login_user(email, password):
         user = result.user
 
         if user.email_confirmed_at is None:
-            return False, "📩 Vui lòng xác minh email trước khi đăng nhập."
+            return False, "📩 Please verify your email before logging in."
         
         # Lấy thông tin profile từ user_profiles
         profile_data = supabase.table("user_profiles").select("*").eq("id", user.id).execute()
@@ -92,7 +91,6 @@ def login_user(email, password):
                 "role": "client"
             }
             
-            
             # Lưu thông tin vào session
             st.session_state["user"] = {
                 "id": user.id,
@@ -111,7 +109,8 @@ def login_user(email, password):
                 "credits": 75
             }).execute()
 
-        return True, f"🎉 Đăng nhập thành công, xin chào {st.session_state['user']['full_name']}!"
+        return True, f"🎉 Login successful, welcome {st.session_state['user']['full_name']}!"
 
     except Exception as e:
-        return False, f"❌ Lỗi đăng nhập: {e}"
+        return False, f"❌ Login error: {e}"
+
